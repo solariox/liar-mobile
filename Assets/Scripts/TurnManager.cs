@@ -1,53 +1,62 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
+using TMPro;
+
 
 public class TurnManager : MonoBehaviour
 {
-    public int currentPlayerIndex = 0; // Index for the current player (0 to 3)
-    public DeckManager deckManager; // Reference to DeckManager to interact with cards
-    public float turnDuration = 30f; // 30 seconds for each player to think
+    public DeckManager deckManager; // Reference to DeckManager
+    public TextMeshProUGUI turnText; // UI Text to display the current player's turn
+    public GameObject timerUI; // Timer UI element to display the countdown
+    public float turnTime = 30f; // 30 seconds for each turn
+    private float currentTurnTime; // Tracks the current time for the player's turn
 
-    private bool isTurnActive = false;
-    private float turnTimer = 0f;
+    public int currentPlayerIndex = 0; // Tracks which player's turn it is
 
-    void Start()
+    private void Start()
     {
-        StartTurn();
+        StartTurn(currentPlayerIndex);
     }
 
-    void Update()
+    void StartTurn(int playerIndex)
     {
-        if (isTurnActive)
+        currentPlayerIndex = playerIndex;
+        currentTurnTime = turnTime;
+        timerUI.SetActive(true); // Show the timer UI
+        UpdateTurnUI();
+
+        // Start a coroutine to handle the countdown timer
+        StartCoroutine(TurnCountdown());
+    }
+
+    void UpdateTurnUI()
+    {
+        // Display whose turn it is
+        turnText.text = "Player " + (currentPlayerIndex + 1) + "'s Turn";
+    }
+
+
+    IEnumerator TurnCountdown()
+    {
+        while (currentTurnTime > 0)
         {
-            turnTimer -= Time.deltaTime;
-            if (turnTimer <= 0f)
-            {
-                EndTurn();
-            }
+            currentTurnTime -= Time.deltaTime;
+            timerUI.GetComponentInChildren<TextMeshProUGUI>().text = Mathf.Ceil(currentTurnTime).ToString(); // Update timer UI
+            yield return null; // Wait until the next frame
         }
-    }
 
-    void StartTurn()
-    {
-        isTurnActive = true;
-        turnTimer = turnDuration;
-        Debug.Log("Player " + (currentPlayerIndex + 1) + "'s turn");
-
-        // Enable the UI and card interaction for the current player
-        deckManager.EnablePlayerTurn(currentPlayerIndex);
+        EndTurn();
     }
 
     void EndTurn()
     {
-        isTurnActive = false;
-        Debug.Log("End of Player " + (currentPlayerIndex + 1) + "'s turn");
 
-        // Disable card interaction for the current player
-        deckManager.DisablePlayerTurn(currentPlayerIndex);
+        // Check if the player has made a claim or if the turn ended automatically
+        Debug.Log("Player " + (currentPlayerIndex + 1) + " has ended their turn.");
 
         // Move to the next player
-        currentPlayerIndex = (currentPlayerIndex + 1) % 4;
-        StartTurn(); // Start the next player's turn
+        currentPlayerIndex = (currentPlayerIndex + 1) % 4; // Cycle through 4 players
+        StartTurn(currentPlayerIndex); // Start the next player's turn
     }
 }

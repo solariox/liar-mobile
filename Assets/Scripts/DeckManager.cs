@@ -19,6 +19,8 @@ public class DeckManager : MonoBehaviour
     private List<Card> deck = new List<Card>();
     private List<Card>[] playersHands = new List<Card>[4];
 
+    private List<CardClickable> selectedCards = new List<CardClickable>(); // Track selected cards
+
     public GameObject cardPrefab; // Prefab for card UI
     public Transform[] playerHandsUI; // Containers for each player's cards
 
@@ -93,10 +95,8 @@ public class DeckManager : MonoBehaviour
             { "Joker2", jokerSprite }
         };
     }
-
     void DisplayCardsInUI()
     {
-        Debug.Log("Deck Shuffled.");
 
         // Display all players' cards, but show ranks and images for player 1, face down for others
         for (int player = 0; player < 4; player++)
@@ -109,6 +109,7 @@ public class DeckManager : MonoBehaviour
                 // Set card text and image
                 Text cardText = cardObject.GetComponentInChildren<Text>();
                 Image cardImage = cardObject.GetComponentInChildren<Image>();
+                CardClickable cardClickable = cardObject.GetComponent<CardClickable>();
 
                 if (cardText != null)
                 {
@@ -130,21 +131,8 @@ public class DeckManager : MonoBehaviour
         }
     }
 
-    public void EnablePlayerTurn(int playerIndex)
+    public List<CardClickable> GetSelectedCards()
     {
-        // Enable interaction for the specified player
-        // This could involve enabling UI buttons for playing cards, etc.
-        // For example, highlight the player’s hand in the UI, and let them select cards
-        // You could change the color of the player’s cards to show they’re active
-        Debug.Log("Player " + (playerIndex + 1) + " can play cards.");
+        return selectedCards; // Return the list of selected cards
     }
-
-
-    public void DisablePlayerTurn(int playerIndex)
-    {
-        // Disable interaction for the specified player
-        // For example, dim the player’s hand or prevent further actions
-        Debug.Log("Player " + (playerIndex + 1) + " cannot play cards.");
-    }
-
 }
