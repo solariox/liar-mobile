@@ -8,17 +8,18 @@ public class DeckManager : MonoBehaviour
     {
         public string Rank;
         public string Type;
+        public bool IsFaceUp;
 
-        public Card(string rank)
+        public Card(string rank, string type = "", bool isFaceUp = false)
         {
             Rank = rank;
+            Type = type;
+            IsFaceUp = isFaceUp;
         }
     }
 
     private List<Card> deck = new List<Card>();
     private List<Card>[] playersHands = new List<Card>[4];
-
-    private List<CardClickable> selectedCards = new List<CardClickable>(); // Track selected cards
 
     public GameObject cardPrefab; // Prefab for card UI
     public Transform[] playerHandsUI; // Containers for each player's cards
@@ -48,8 +49,8 @@ public class DeckManager : MonoBehaviour
             deck.Add(new Card("Queen"));
             deck.Add(new Card("Ace"));
         }
-        deck.Add(new Card("Joker"));
-        deck.Add(new Card("Joker"));
+        deck.Add(new Card("Joker", "1"));
+        deck.Add(new Card("Joker", "2"));
     }
 
     void ShuffleDeck()
@@ -90,11 +91,14 @@ public class DeckManager : MonoBehaviour
             { "Ace", aceSprite },
             { "King", kingSprite },
             { "Queen", queenSprite },
-            { "Joker", jokerSprite },
+            { "Joker1", jokerSprite },
+            { "Joker2", jokerSprite }
         };
     }
+
     void DisplayCardsInUI()
     {
+        Debug.Log("Deck Shuffled.");
 
         // Display all players' cards, but show ranks and images for player 1, face down for others
         for (int player = 0; player < 4; player++)
@@ -107,7 +111,6 @@ public class DeckManager : MonoBehaviour
                 // Set card text and image
                 Text cardText = cardObject.GetComponentInChildren<Text>();
                 Image cardImage = cardObject.GetComponentInChildren<Image>();
-                CardClickable cardClickable = cardObject.GetComponent<CardClickable>();
 
                 if (cardText != null)
                 {
@@ -116,14 +119,21 @@ public class DeckManager : MonoBehaviour
 
                 if (cardImage != null)
                 {
-                    if (isPlayerOne && cardLibrary.ContainsKey(card.Rank))
+                    if (isPlayerOne && cardLibrary.ContainsKey(card.Rank + card.Type))
                     {
-                        cardImage.sprite = cardLibrary[card.Rank]; // Set the correct face-up image
+                        cardImage.sprite = cardLibrary[card.Rank + card.Type]; // Set the correct face-up image
                     }
                     else
                     {
                         cardImage.sprite = backSprite; // Or use your back card image
                     }
+                }
+
+                // Attach the card data to the clickable script
+                CardClickable cardClickable = cardObject.GetComponent<CardClickable>();
+                if (cardClickable != null)
+                {
+                    cardClickable.card = card;
                 }
             }
         }

@@ -5,13 +5,12 @@ using UnityEngine.UI;
 
 public class CardClickable : MonoBehaviour, IPointerClickHandler
 {
-
     public DeckManager.Card card; // This will be the card data associated with the UI
     public static List<DeckManager.Card> selectedCards = new List<DeckManager.Card>(); // Keeps track of selected cards
 
     public void OnPointerClick(PointerEventData eventData)
     {
-
+        Debug.Log(card);
         // Check if the card is already selected
         if (selectedCards.Contains(card))
         {
@@ -28,7 +27,23 @@ public class CardClickable : MonoBehaviour, IPointerClickHandler
                 UpdateCardVisuals(true); // Update the visual (e.g., select color)
             }
         }
+    }
 
+    void DeselectAllCards()
+    {
+        foreach (DeckManager.Card selectedCard in selectedCards)
+        {
+            // Find the corresponding CardClickable component and update its visuals
+            CardClickable[] cardClickables = FindObjectsOfType<CardClickable>();
+            foreach (CardClickable cardClickable in cardClickables)
+            {
+                if (cardClickable.card == selectedCard)
+                {
+                    cardClickable.UpdateCardVisuals(false);
+                }
+            }
+        }
+        selectedCards.Clear();
     }
 
     void UpdateCardVisuals(bool isSelected)

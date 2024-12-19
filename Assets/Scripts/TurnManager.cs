@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using TMPro;
+using System.Collections.Generic;
 
 
 public class TurnManager : MonoBehaviour
@@ -16,6 +17,10 @@ public class TurnManager : MonoBehaviour
     private float currentTurnTime; // Tracks the current time for the player's turn
     private string[] turnTypeArray = new string[] { "Ace", "King", "Queen" };
     private string turnType;
+
+    private List<DeckManager.Card> lastPlayedCards = new List<DeckManager.Card>();
+
+
 
 
     private void Start()
@@ -60,6 +65,71 @@ public class TurnManager : MonoBehaviour
 
         EndTurn();
     }
+
+    public void PlayCards()
+    {
+
+       Debug.Log("PlayCards");
+        // Get the selected cards
+        List<DeckManager.Card> selectedCards = CardClickable.selectedCards;
+        // log all cards selected
+        foreach (DeckManager.Card card in selectedCards)
+        {
+            Debug.Log("Selected card: " + card.Rank);
+        }
+
+        // Validate the play
+        //if (selectedCards.Count == 0)
+        //{
+        //    Debug.LogWarning("No cards selected!");
+        //    return;
+        //}
+
+        //// Check if cards match the turn type
+        //foreach (DeckManager.Card card in selectedCards)
+        //{
+        //    if (card.Rank != turnType)
+        //    {
+        //        Debug.LogWarning("Selected cards do not match the turn type!");
+        //        return;
+        //    }
+        //}
+
+        //// If valid, record the played cards
+        //lastPlayedCards = new List<DeckManager.Card>(selectedCards);
+
+        //// Remove played cards from the player's hand
+        //deckManager.RemoveCardsFromPlayer(currentPlayerIndex, selectedCards);
+
+        // Move to the next turn
+        EndTurn();
+    }
+
+    public void CallLiar()
+    {
+        // Check the last played cards
+        if (lastPlayedCards.Count == 0)
+        {
+            Debug.LogWarning("No cards to challenge!");
+            return;
+        }
+
+        // Validate the claim
+        foreach (DeckManager.Card card in lastPlayedCards)
+        {
+            if (card.Rank != turnType)
+            {
+                Debug.Log("Liar detected! Previous player loses!");
+                return;
+            }
+        }
+
+        Debug.Log("False accusation! Current player loses!");
+
+        // Apply penalties (e.g., draw cards, lose points) and move to the next turn
+        EndTurn();
+    }
+
 
     void EndTurn()
     {
