@@ -29,8 +29,6 @@ public class CardClickable : MonoBehaviour, IPointerClickHandler
             }
         }
 
-        // Log the selected cards
-        Debug.Log("Selected Cards: " + selectedCards.Count);
     }
 
     void UpdateCardVisuals(bool isSelected)

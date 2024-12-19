@@ -9,10 +9,9 @@ public class DeckManager : MonoBehaviour
         public string Rank;
         public string Type;
 
-        public Card(string rank, string type = "")
+        public Card(string rank)
         {
             Rank = rank;
-            Type = type;
         }
     }
 
@@ -49,8 +48,8 @@ public class DeckManager : MonoBehaviour
             deck.Add(new Card("Queen"));
             deck.Add(new Card("Ace"));
         }
-        deck.Add(new Card("Joker", "1"));
-        deck.Add(new Card("Joker", "2"));
+        deck.Add(new Card("Joker"));
+        deck.Add(new Card("Joker"));
     }
 
     void ShuffleDeck()
@@ -91,8 +90,7 @@ public class DeckManager : MonoBehaviour
             { "Ace", aceSprite },
             { "King", kingSprite },
             { "Queen", queenSprite },
-            { "Joker1", jokerSprite },
-            { "Joker2", jokerSprite }
+            { "Joker", jokerSprite },
         };
     }
     void DisplayCardsInUI()
@@ -118,9 +116,9 @@ public class DeckManager : MonoBehaviour
 
                 if (cardImage != null)
                 {
-                    if (isPlayerOne && cardLibrary.ContainsKey(card.Rank + card.Type))
+                    if (isPlayerOne && cardLibrary.ContainsKey(card.Rank))
                     {
-                        cardImage.sprite = cardLibrary[card.Rank + card.Type]; // Set the correct face-up image
+                        cardImage.sprite = cardLibrary[card.Rank]; // Set the correct face-up image
                     }
                     else
                     {
@@ -129,10 +127,5 @@ public class DeckManager : MonoBehaviour
                 }
             }
         }
-    }
-
-    public List<CardClickable> GetSelectedCards()
-    {
-        return selectedCards; // Return the list of selected cards
     }
 }

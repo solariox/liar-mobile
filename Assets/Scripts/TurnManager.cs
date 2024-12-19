@@ -7,12 +7,16 @@ using TMPro;
 public class TurnManager : MonoBehaviour
 {
     public DeckManager deckManager; // Reference to DeckManager
-    public TextMeshProUGUI turnText; // UI Text to display the current player's turn
+    public TextMeshProUGUI turnPlayerText; // UI Text to display the current player's turn
+    public TextMeshProUGUI turnTypeText; // UI Text to display the current player's turn
     public GameObject timerUI; // Timer UI element to display the countdown
     public float turnTime = 30f; // 30 seconds for each turn
-    private float currentTurnTime; // Tracks the current time for the player's turn
-
     public int currentPlayerIndex = 0; // Tracks which player's turn it is
+
+    private float currentTurnTime; // Tracks the current time for the player's turn
+    private string[] turnTypeArray = new string[] { "Ace", "King", "Queen" };
+    private string turnType;
+
 
     private void Start()
     {
@@ -21,8 +25,14 @@ public class TurnManager : MonoBehaviour
 
     void StartTurn(int playerIndex)
     {
+        // select the turn type random between Ace, King, Queen, Joker
+        int randomIndex = Random.Range(0, turnTypeArray.Length);
+        turnType = turnTypeArray[randomIndex];
+
         currentPlayerIndex = playerIndex;
         currentTurnTime = turnTime;
+ 
+
         timerUI.SetActive(true); // Show the timer UI
         UpdateTurnUI();
 
@@ -33,7 +43,9 @@ public class TurnManager : MonoBehaviour
     void UpdateTurnUI()
     {
         // Display whose turn it is
-        turnText.text = "Player " + (currentPlayerIndex + 1) + "'s Turn";
+        turnPlayerText.text = "Player " + (currentPlayerIndex + 1) + "'s Turn";
+        Debug.Log("Player " + (currentPlayerIndex + 1) + "'s Turn with turn type: " + turnType);
+        turnTypeText.text = "Turn Type: " + turnType;
     }
 
 
