@@ -8,9 +8,26 @@ public class CardClickable : MonoBehaviour, IPointerClickHandler
     public DeckManager.Card card; // This will be the card data associated with the UI
     public static List<DeckManager.Card> selectedCards = new List<DeckManager.Card>(); // Keeps track of selected cards
 
+    private TurnManager turnManager; // Reference to TurnManager
+
+    void Start()
+    {
+        turnManager = Object.FindFirstObjectByType<TurnManager>();
+    }
+
     public void OnPointerClick(PointerEventData eventData)
     {
-        Debug.Log(card);
+        int cardOwnerIndex = GetCardOwnerIndex();
+
+        // Check if it's the correct player's turn
+        if (turnManager.currentPlayerIndex != cardOwnerIndex)
+        {
+            Debug.Log("Not your turn!");
+            return;
+        }
+
+        Debug.Log(selectedCards.Count);
+
         // Check if the card is already selected
         if (selectedCards.Contains(card))
         {
@@ -29,12 +46,25 @@ public class CardClickable : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    void DeselectAllCards()
+    private int GetCardOwnerIndex()
+    {
+        for (int i = 0; i < turnManager.deckManager.playerHandsUI.Length; i++)
+        {
+            if (transform.parent == turnManager.deckManager.playerHandsUI[i])
+            {
+                return i;
+            }
+        }
+        Debug.LogError("Card owner could not be determined.");
+        return -1;
+    }
+
+    public void DeselectAllCards()
     {
         foreach (DeckManager.Card selectedCard in selectedCards)
         {
             // Find the corresponding CardClickable component and update its visuals
-            CardClickable[] cardClickables = FindObjectsOfType<CardClickable>();
+            CardClickable[] cardClickables = FindObjectsByType<CardClickable>(FindObjectsSortMode.None);
             foreach (CardClickable cardClickable in cardClickables)
             {
                 if (cardClickable.card == selectedCard)
@@ -61,3 +91,4 @@ public class CardClickable : MonoBehaviour, IPointerClickHandler
         }
     }
 }
+

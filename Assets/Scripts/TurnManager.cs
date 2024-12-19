@@ -19,6 +19,7 @@ public class TurnManager : MonoBehaviour
     private string turnType;
 
     private List<DeckManager.Card> lastPlayedCards = new List<DeckManager.Card>();
+    private CardClickable cardClickable;
 
 
 
@@ -26,6 +27,8 @@ public class TurnManager : MonoBehaviour
     private void Start()
     {
         StartTurn(currentPlayerIndex);
+        cardClickable = Object.FindFirstObjectByType<CardClickable>();
+
     }
 
     void StartTurn(int playerIndex)
@@ -49,7 +52,6 @@ public class TurnManager : MonoBehaviour
     {
         // Display whose turn it is
         turnPlayerText.text = "Player " + (currentPlayerIndex + 1) + "'s Turn";
-        Debug.Log("Player " + (currentPlayerIndex + 1) + "'s Turn with turn type: " + turnType);
         turnTypeText.text = "Turn Type: " + turnType;
     }
 
@@ -72,36 +74,18 @@ public class TurnManager : MonoBehaviour
        Debug.Log("PlayCards");
         // Get the selected cards
         List<DeckManager.Card> selectedCards = CardClickable.selectedCards;
-        // log all cards selected
-        foreach (DeckManager.Card card in selectedCards)
-        {
-            Debug.Log("Selected card: " + card.Rank);
-        }
+
 
         // Validate the play
-        //if (selectedCards.Count == 0)
-        //{
-        //    Debug.LogWarning("No cards selected!");
-        //    return;
-        //}
+        if (selectedCards.Count == 0)
+        {
+            Debug.LogWarning("No cards selected!");
+            return;
+        }
 
-        //// Check if cards match the turn type
-        //foreach (DeckManager.Card card in selectedCards)
-        //{
-        //    if (card.Rank != turnType)
-        //    {
-        //        Debug.LogWarning("Selected cards do not match the turn type!");
-        //        return;
-        //    }
-        //}
-
-        //// If valid, record the played cards
-        //lastPlayedCards = new List<DeckManager.Card>(selectedCards);
-
-        //// Remove played cards from the player's hand
-        //deckManager.RemoveCardsFromPlayer(currentPlayerIndex, selectedCards);
-
-        // Move to the next turn
+        // If valid, record the played cards
+        lastPlayedCards = new List<DeckManager.Card>(selectedCards);
+        deckManager.RemoveCardsFromPlayer(currentPlayerIndex, selectedCards);
         EndTurn();
     }
 
@@ -136,6 +120,7 @@ public class TurnManager : MonoBehaviour
 
         // Check if the player has made a claim or if the turn ended automatically
         Debug.Log("Player " + (currentPlayerIndex + 1) + " has ended their turn.");
+        cardClickable.DeselectAllCards(); // Deselect all cards
 
         // Move to the next player
         currentPlayerIndex = (currentPlayerIndex + 1) % 4; // Cycle through 4 players

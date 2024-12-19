@@ -7,13 +7,11 @@ public class DeckManager : MonoBehaviour
     public class Card
     {
         public string Rank;
-        public string Type;
         public bool IsFaceUp;
 
-        public Card(string rank, string type = "", bool isFaceUp = false)
+        public Card(string rank, bool isFaceUp = false)
         {
             Rank = rank;
-            Type = type;
             IsFaceUp = isFaceUp;
         }
     }
@@ -49,8 +47,8 @@ public class DeckManager : MonoBehaviour
             deck.Add(new Card("Queen"));
             deck.Add(new Card("Ace"));
         }
-        deck.Add(new Card("Joker", "1"));
-        deck.Add(new Card("Joker", "2"));
+        deck.Add(new Card("Joker"));
+        deck.Add(new Card("Joker"));
     }
 
     void ShuffleDeck()
@@ -91,14 +89,12 @@ public class DeckManager : MonoBehaviour
             { "Ace", aceSprite },
             { "King", kingSprite },
             { "Queen", queenSprite },
-            { "Joker1", jokerSprite },
-            { "Joker2", jokerSprite }
+            { "Joker", jokerSprite },
         };
     }
 
     void DisplayCardsInUI()
     {
-        Debug.Log("Deck Shuffled.");
 
         // Display all players' cards, but show ranks and images for player 1, face down for others
         for (int player = 0; player < 4; player++)
@@ -119,9 +115,9 @@ public class DeckManager : MonoBehaviour
 
                 if (cardImage != null)
                 {
-                    if (isPlayerOne && cardLibrary.ContainsKey(card.Rank + card.Type))
+                    if (isPlayerOne && cardLibrary.ContainsKey(card.Rank))
                     {
-                        cardImage.sprite = cardLibrary[card.Rank + card.Type]; // Set the correct face-up image
+                        cardImage.sprite = cardLibrary[card.Rank]; // Set the correct face-up image
                     }
                     else
                     {
@@ -137,5 +133,28 @@ public class DeckManager : MonoBehaviour
                 }
             }
         }
+    }
+
+
+    public void RemoveCardsFromPlayer(int playerIndex, List<Card> card)
+    {
+        foreach(Card c in card)
+        {
+            playersHands[playerIndex].Remove(c);
+            // destroy them from UI
+
+            // Find the corresponding card object in the UI and destroy it
+            foreach (Transform cardTransform in playerHandsUI[playerIndex])
+            {
+                CardClickable cardClickable = cardTransform.GetComponent<CardClickable>();
+                if (cardClickable != null && cardClickable.card == c)
+                {
+                    Destroy(cardTransform.gameObject);
+                    break;
+                }
+            }
+
+        }
+
     }
 }
