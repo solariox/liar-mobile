@@ -97,26 +97,34 @@ public class TurnManager : MonoBehaviour
         }
 
         TextMeshProUGUI winnnerText = GameObject.Find("WinText").GetComponent<TextMeshProUGUI>();
+        // reveal the cards
+        deckManager.revealCard(lastPlayedCards.Count);
 
         // Validate the claim
         foreach (DeckManager.Card card in lastPlayedCards)
         {
 
-            if (card.Rank != turnType)
+
+            if (card.Rank != turnType && card.Rank != "Joker")
             {
-                Debug.Log("Liar detected! Previous player lost ");
                 winnnerText.text = "Player " + (currentPlayerIndex) + " lost!";
+                EndGame();
                 return;
             }
         }
 
-        Debug.Log("False accusation! current player lost !");
         winnnerText.text = (currentPlayerIndex + 1) + " lost!";
+        EndGame();
 
         // Apply penalties (e.g., draw cards, lose points) and move to the next turn
-        EndTurn();
     }
 
+    private void EndGame()
+    {
+        this.turnPlayerText.text = "Game Over!";
+        this.turnTypeText.text = "";
+        timerUI.SetActive(false);
+    }
 
     void EndTurn()
     {

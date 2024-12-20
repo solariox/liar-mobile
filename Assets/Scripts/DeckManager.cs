@@ -165,4 +165,15 @@ public class DeckManager : MonoBehaviour
         }
 
     }
+
+    internal void revealCard(int numberToReveal)
+    {
+        // reveal the n last cards of the common board
+        for (int i = 0; i < numberToReveal; i++)
+        {
+            Transform cardTransform = CommonBoard.GetChild(CommonBoard.childCount - 1 - i);
+            Image cardImage = cardTransform.GetComponentInChildren<Image>();
+            cardImage.sprite = cardLibrary[cardTransform.GetComponent<CardClickable>().card.Rank];
+        }
+    }
 }
