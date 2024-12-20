@@ -21,6 +21,8 @@ public class DeckManager : MonoBehaviour
 
     public GameObject cardPrefab; // Prefab for card UI
     public Transform[] playerHandsUI; // Containers for each player's cards
+    public Transform CommonBoard; // Containers for each player's cards
+
 
     public Sprite aceSprite;
     public Sprite kingSprite;
@@ -143,13 +145,19 @@ public class DeckManager : MonoBehaviour
             playersHands[playerIndex].Remove(c);
             // destroy them from UI
 
-            // Find the corresponding card object in the UI and destroy it
+            // Find the corresponding card object in the UI and move it to the common board
             foreach (Transform cardTransform in playerHandsUI[playerIndex])
             {
                 CardClickable cardClickable = cardTransform.GetComponent<CardClickable>();
                 if (cardClickable != null && cardClickable.card == c)
                 {
-                    Destroy(cardTransform.gameObject);
+                    // make it face down
+                    Image cardImage = cardTransform.GetComponentInChildren<Image>();
+                    if (cardImage != null)
+                    {
+                        cardImage.sprite = backSprite;
+                    }
+                    cardTransform.SetParent(CommonBoard);
                     break;
                 }
             }

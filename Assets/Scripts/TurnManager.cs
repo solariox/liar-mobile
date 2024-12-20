@@ -26,6 +26,9 @@ public class TurnManager : MonoBehaviour
 
     private void Start()
     {
+        // select the turn type random between Ace, King, Queen, Joker
+        int randomIndex = Random.Range(0, turnTypeArray.Length);
+        turnType = turnTypeArray[randomIndex];
         StartTurn(currentPlayerIndex);
         cardClickable = Object.FindFirstObjectByType<CardClickable>();
 
@@ -33,9 +36,6 @@ public class TurnManager : MonoBehaviour
 
     void StartTurn(int playerIndex)
     {
-        // select the turn type random between Ace, King, Queen, Joker
-        int randomIndex = Random.Range(0, turnTypeArray.Length);
-        turnType = turnTypeArray[randomIndex];
 
         currentPlayerIndex = playerIndex;
         currentTurnTime = turnTime;
@@ -52,7 +52,7 @@ public class TurnManager : MonoBehaviour
     {
         // Display whose turn it is
         turnPlayerText.text = "Player " + (currentPlayerIndex + 1) + "'s Turn";
-        turnTypeText.text = "Turn Type: " + turnType;
+        turnTypeText.text =  turnType;
     }
 
 
@@ -71,10 +71,8 @@ public class TurnManager : MonoBehaviour
     public void PlayCards()
     {
 
-       Debug.Log("PlayCards");
         // Get the selected cards
         List<DeckManager.Card> selectedCards = CardClickable.selectedCards;
-
 
         // Validate the play
         if (selectedCards.Count == 0)
@@ -98,17 +96,22 @@ public class TurnManager : MonoBehaviour
             return;
         }
 
+        TextMeshProUGUI winnnerText = GameObject.Find("WinText").GetComponent<TextMeshProUGUI>();
+
         // Validate the claim
         foreach (DeckManager.Card card in lastPlayedCards)
         {
+
             if (card.Rank != turnType)
             {
-                Debug.Log("Liar detected! Previous player loses!");
+                Debug.Log("Liar detected! Previous player lost ");
+                winnnerText.text = "Player " + (currentPlayerIndex) + " lost!";
                 return;
             }
         }
 
-        Debug.Log("False accusation! Current player loses!");
+        Debug.Log("False accusation! current player lost !");
+        winnnerText.text = (currentPlayerIndex + 1) + " lost!";
 
         // Apply penalties (e.g., draw cards, lose points) and move to the next turn
         EndTurn();
@@ -118,9 +121,7 @@ public class TurnManager : MonoBehaviour
     void EndTurn()
     {
 
-        // Check if the player has made a claim or if the turn ended automatically
-        Debug.Log("Player " + (currentPlayerIndex + 1) + " has ended their turn.");
-        cardClickable.DeselectAllCards(); // Deselect all cards
+        cardClickable.DeselectAllCards(); 
 
         // Move to the next player
         currentPlayerIndex = (currentPlayerIndex + 1) % 4; // Cycle through 4 players

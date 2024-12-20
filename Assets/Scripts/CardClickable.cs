@@ -26,7 +26,6 @@ public class CardClickable : MonoBehaviour, IPointerClickHandler
             return;
         }
 
-        Debug.Log(selectedCards.Count);
 
         // Check if the card is already selected
         if (selectedCards.Contains(card))
