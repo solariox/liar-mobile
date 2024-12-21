@@ -19,18 +19,28 @@ public class TurnManager : MonoBehaviour
     private string turnType;
 
     private List<DeckManager.Card> lastPlayedCards = new List<DeckManager.Card>();
-    private CardClickable cardClickable;
-
+    CardClickable cardClickable;
 
 
 
     private void Start()
     {
+        cardClickable = Object.FindFirstObjectByType<CardClickable>();
+
+        // Init all players gun 
+        for (int i = 0; i < 4; i++)
+        {
+            GameObject player = GameObject.Find("Player" + (i + 1));
+            GameObject gun = player.transform.Find("Player" + (i + 1) + "Gun").gameObject;
+            // find textmesh of gun
+            gun.GetComponentInChildren<TextMeshProUGUI>().text = "0";
+        }
+
+
         // select the turn type random between Ace, King, Queen, Joker
         int randomIndex = Random.Range(0, turnTypeArray.Length);
         turnType = turnTypeArray[randomIndex];
         StartTurn(currentPlayerIndex);
-        cardClickable = Object.FindFirstObjectByType<CardClickable>();
 
     }
 
@@ -39,7 +49,7 @@ public class TurnManager : MonoBehaviour
 
         currentPlayerIndex = playerIndex;
         currentTurnTime = turnTime;
- 
+
 
         timerUI.SetActive(true); // Show the timer UI
         UpdateTurnUI();
@@ -52,7 +62,7 @@ public class TurnManager : MonoBehaviour
     {
         // Display whose turn it is
         turnPlayerText.text = "Player " + (currentPlayerIndex + 1) + "'s Turn";
-        turnTypeText.text =  turnType;
+        turnTypeText.text = turnType;
     }
 
 
@@ -96,28 +106,46 @@ public class TurnManager : MonoBehaviour
             return;
         }
 
-        TextMeshProUGUI winnnerText = GameObject.Find("WinText").GetComponent<TextMeshProUGUI>();
+        TextMeshProUGUI looserText = GameObject.Find("WinText").GetComponent<TextMeshProUGUI>();
         // reveal the cards
         deckManager.revealCard(lastPlayedCards.Count);
+
+        string text = null;
 
         // Validate the claim
         foreach (DeckManager.Card card in lastPlayedCards)
         {
 
-
             if (card.Rank != turnType && card.Rank != "Joker")
             {
-                winnnerText.text = "Player " + (currentPlayerIndex) + " lost!";
+                text = "Player " + (currentPlayerIndex) + " lost!";
                 EndGame();
-                return;
+                break;
             }
         }
 
-        winnnerText.text = (currentPlayerIndex + 1) + " lost!";
-        EndGame();
+        text ??= "Player " + (currentPlayerIndex + 1) + " lost!";
+        looserText.text = text;
 
-        // Apply penalties (e.g., draw cards, lose points) and move to the next turn
+        // Make looser shot one bullet
+        GameObject player = GameObject.Find("Player" + (currentPlayerIndex + 1));
+        GameObject gun = player.transform.Find("Player" + (currentPlayerIndex + 1) + "Gun").gameObject;
+        TextMeshProUGUI gunText = gun.GetComponentInChildren<TextMeshProUGUI>();
+        int freeSlots = int.Parse(gunText.text);
+        // try to shoot, the chance of shooting is 1/freeslots
+        if (Random.Range(0, freeSlots) == 0)
+        {
+            Debug.Log("Player " + (currentPlayerIndex + 1) + " died!");
+        }
+        else
+        {
+            // player survived
+            gunText.text = (freeSlots - 1).ToString();
+        }
+        EndGame();
     }
+
+
 
     private void EndGame()
     {
@@ -128,8 +156,7 @@ public class TurnManager : MonoBehaviour
 
     void EndTurn()
     {
-
-        cardClickable.DeselectAllCards(); 
+        cardClickable.DeselectAllCards();
 
         // Move to the next player
         currentPlayerIndex = (currentPlayerIndex + 1) % 4; // Cycle through 4 players

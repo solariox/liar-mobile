@@ -138,18 +138,18 @@ public class DeckManager : MonoBehaviour
     }
 
 
-    public void RemoveCardsFromPlayer(int playerIndex, List<Card> card)
+    public void RemoveCardsFromPlayer(int playerIndex, List<Card> cards)
     {
-        foreach(Card c in card)
+        foreach (Card card in cards)
         {
-            playersHands[playerIndex].Remove(c);
+            playersHands[playerIndex].Remove(card);
             // destroy them from UI
 
             // Find the corresponding card object in the UI and move it to the common board
             foreach (Transform cardTransform in playerHandsUI[playerIndex])
             {
                 CardClickable cardClickable = cardTransform.GetComponent<CardClickable>();
-                if (cardClickable != null && cardClickable.card == c)
+                if (cardClickable != null && cardClickable.card == card)
                 {
                     // make it face down
                     Image cardImage = cardTransform.GetComponentInChildren<Image>();
