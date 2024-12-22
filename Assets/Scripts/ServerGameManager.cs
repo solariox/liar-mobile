@@ -7,9 +7,14 @@ public class ServerGameManager : NetworkBehaviour
 {
     // A simple list to represent a deck of cards (e.g., 1, 2, 3, ..., 10)
     private List<Card> deck = new List<Card>();
+    private List<Card> commonDeck = new List<Card>();
+    private List<Card> lastPlayedCards = new List<Card>();
     private List<Player> players = new List<Player>();
+
+
     private string currentTurnType;
     private Player currentPlayer;
+    private int currentPlayerIndex;
 
     public static ServerGameManager Instance { get; private set; }
 
@@ -28,6 +33,11 @@ public class ServerGameManager : NetworkBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    private void Start()
+    {
+        CreatePlayers();
+
+    }
 
     /// <summary>
     /// Client: Requests the server to shuffle the deck.
@@ -35,11 +45,10 @@ public class ServerGameManager : NetworkBehaviour
     public void RequestStartGame()
     {
 
-        CreatePlayers();
         ShuffleDeck();
         DealCards();
-        InitTurn();
-        NotifyGameIsReadyToBeginClientRPC();
+        InitNewTurn();
+        NotifyGameToUpdateUiClientRPC();
     }
 
 
@@ -73,10 +82,14 @@ public class ServerGameManager : NetworkBehaviour
     /// <summary>
     /// Server: Deals cards to players.
     /// </summary>
-    void DealCards()
+    private void DealCards()
     {
         foreach (Player player in players)
         {
+            player.Cards.Clear();
+            commonDeck.Clear();
+            lastPlayedCards.Clear();
+
             for (int i = 0; i < 5; i++)
             {
                 player.AddCard(deck[0]);
@@ -85,13 +98,71 @@ public class ServerGameManager : NetworkBehaviour
         }
     }
 
+    public void PlayCards(List<Card> cards)
+    {
+        lastPlayedCards = new List<Card>();
 
-    private void InitTurn()
+        Debug.Log(lastPlayedCards.Count);
+        Player player = cards[0].Owner;
+        // Move cards from player to commonBoard
+        foreach (Card card in cards)
+        {
+            lastPlayedCards.Add(card);
+            commonDeck.Add(card);
+            player.Cards.Remove(card);
+        }
+
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.Count;
+        currentPlayer = players[currentPlayerIndex];
+
+        NotifyGameToUpdateUiClientRPC();
+    }
+
+    public void CallLiar()
+    {
+        Debug.Log(lastPlayedCards.Count);
+        //Check the last played cards
+        //if (lastPlayedCards.Count == 0)
+        //{
+        //Debug.LogWarning("No cards to challenge!");
+        //return;
+        //}
+
+        Player looser = null;
+        // Validate the claim
+        foreach (Card card in lastPlayedCards)
+        {
+            Debug.Log(card.Rank);
+            if (card.Rank != currentTurnType && card.Rank != "Joker")
+            {
+                looser = players[currentPlayerIndex - 1];
+                break;
+            }
+        }
+
+        looser = looser ?? players[currentPlayerIndex];
+
+        if (Random.Range(0, looser.Chances) == 0)
+        {
+            UIManager.Instance.NotifyClient(looser.Name + " died!");
+        }
+        else
+        {
+            UIManager.Instance.NotifyClient(looser.Name + " shoot and lived!");
+            looser.Chances--;
+        }
+
+    }
+
+
+    private void InitNewTurn()
     {
         string[] turnTypeArray = { "King", "Queen", "Ace" };
         int randomIndex = Random.Range(0, turnTypeArray.Length);
         currentTurnType = turnTypeArray[randomIndex];
-        currentPlayer = players[0];
+        // TODO: Better way to do this ? 
+        currentPlayerIndex = 0;
+        currentPlayer = players[currentPlayerIndex];
     }
 
 
@@ -99,14 +170,16 @@ public class ServerGameManager : NetworkBehaviour
     /// Client: Notifies all clients that the deck has been shuffled.
     /// </summary>
     [ClientRpc]
-    private void NotifyGameIsReadyToBeginClientRPC()
+    private void NotifyGameToUpdateUiClientRPC()
     {
         // Call UiManager to update the UI on all clients
-        UIManager.Instance.UpdateGameStartUI(currentTurnType, players, currentPlayer);
+        UIManager.Instance.UpdateGameUi(currentTurnType, players, currentPlayer, commonDeck);
     }
+
 
     public Player GetCurrentPlayer()
     {
         return currentPlayer;
     }
+
 }

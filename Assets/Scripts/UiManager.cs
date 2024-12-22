@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -23,9 +24,11 @@ public class UIManager : MonoBehaviour
     private Dictionary<string, Sprite> cardLibrary;
     private TextMeshProUGUI turnTypeText;
     private TextMeshProUGUI turnPlayerText;
+    private TextMeshProUGUI winText;
     private Transform commonBoard; // Containers for each player's cards
 
     public List<Card> selectedCards = new List<Card>();
+    public List<Card> lastPlayedCards = new List<Card>();
 
 
     public void Awake()
@@ -46,6 +49,7 @@ public class UIManager : MonoBehaviour
 
         turnPlayerText = GameObject.Find("TurnPlayer").GetComponent<TextMeshProUGUI>();
         turnTypeText = GameObject.Find("TurnType").GetComponent<TextMeshProUGUI>();
+        winText = GameObject.Find("WinText").GetComponent<TextMeshProUGUI>();
         commonBoard = GameObject.Find("CommonBoard").transform;
 
     }
@@ -55,14 +59,15 @@ public class UIManager : MonoBehaviour
     /// <summary>
     /// Updates the UI to show the game's start state.
     /// </summary>
-    public void UpdateGameStartUI(string currentTurnType, List<Player> players, Player currentPlayer)
+    public void UpdateGameUi(string currentTurnType, List<Player> players, Player currentPlayer, List<Card> commonDeck)
     {
 
         turnTypeText.text = currentTurnType;
         turnPlayerText.text = currentPlayer.Name;
-        DisplayAllCards(players);
         DisplayAllPlayerUi(players);
+        DisplayAllCards(players, commonDeck);
     }
+
 
     private void DisplayAllPlayerUi(List<Player> players)
     {
@@ -73,10 +78,18 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void DisplayAllCards(List<Player> players)
+    private void DisplayAllCards(List<Player> players, List<Card> lCommonDeck)
     {
+
         for (int i = 0; i < players.Count; i++)
         {
+            // First, clear previous data
+            foreach(Transform child in playerHandsUI[i].transform)
+            {
+                Destroy(child.gameObject);
+            }
+
+
             // TODO: set the current player
             bool isPlayerOne = i == 0;
 
@@ -111,8 +124,60 @@ public class UIManager : MonoBehaviour
                 {
                     cardClickable.card = card;
                 }
+            }
 
+            if (lCommonDeck != null)
+            {
+                // First, clear previous data
+                foreach (Transform child in commonBoard)
+                {
+                    Destroy(child.gameObject);
+                }
+
+                foreach (Card card in lCommonDeck)
+                {
+                    GameObject cardObject = Instantiate(cardPrefab, playerHandsUI[i]);
+
+                    // Set card text and image
+                    Text cardText = cardObject.GetComponentInChildren<Text>();
+                    Image cardImage = cardObject.GetComponentInChildren<Image>();
+                    cardImage.sprite = backSprite;
+                    cardObject.transform.SetParent(commonBoard);
+                }
             }
         }
+    }
+
+
+    public void playCards()
+    {
+
+        //    // Validate the play
+        if (selectedCards.Count == 0)
+        {
+            Debug.LogWarning("No cards selected!");
+            return;
+        }
+
+        ServerGameManager.Instance.PlayCards(selectedCards);
+        selectedCards.Clear();
+    }
+
+    public void CallLiar()
+    {
+        ServerGameManager.Instance.CallLiar();
+    }
+
+
+    public void NotifyClient(string message)
+    {
+        winText.text = message;
+        StartCoroutine(ClearMessageAfterDelay(5f)); // Clear after 5 seconds
+    }
+
+    private IEnumerator ClearMessageAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay); // Wait for the specified delay
+        winText.text = ""; // Clear the text
     }
 }
