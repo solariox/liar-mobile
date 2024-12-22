@@ -3,77 +3,64 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+
 public class CardClickable : MonoBehaviour, IPointerClickHandler
 {
-    public DeckManager.Card card; // This will be the card data associated with the UI
-    public static List<DeckManager.Card> selectedCards = new List<DeckManager.Card>(); // Keeps track of selected cards
-
-    private TurnManager turnManager; // Reference to TurnManager
+    public Card card; // This will be the card data associated with the UI
+    private UIManager UIManager;
+    private ServerGameManager ServerGameManager;
 
     void Start()
     {
-        turnManager = Object.FindFirstObjectByType<TurnManager>();
+        UIManager = UIManager.Instance;
+        ServerGameManager = ServerGameManager.Instance;
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        int cardOwnerIndex = GetCardOwnerIndex();
+
 
         // Check if it's the correct player's turn
-        if (turnManager.currentPlayerIndex != cardOwnerIndex)
+        if (!(ServerGameManager.GetCurrentPlayer() != card.Owner))
         {
             Debug.Log("Not your turn!");
             return;
         }
 
-
         // Check if the card is already selected
-        if (selectedCards.Contains(card))
+        if (UIManager.selectedCards.Contains(card))
         {
-            // Deselect the card if it's already selected
-            selectedCards.Remove(card);
-            UpdateCardVisuals(false); // Update the visual (e.g., deselect color)
+            UIManager.selectedCards.Remove(card);
+            UpdateCardVisuals(false); 
         }
         else
         {
             // If we have less than 3 cards selected, allow selecting a new card
-            if (selectedCards.Count < 3)
+            if (UIManager.selectedCards.Count < 3)
             {
-                selectedCards.Add(card);
-                UpdateCardVisuals(true); // Update the visual (e.g., select color)
+                UIManager.selectedCards.Add(card);
+                UpdateCardVisuals(true); 
             }
         }
     }
 
-    private int GetCardOwnerIndex()
-    {
-        for (int i = 0; i < turnManager.deckManager.playerHandsUI.Length; i++)
-        {
-            if (transform.parent == turnManager.deckManager.playerHandsUI[i])
-            {
-                return i;
-            }
-        }
-        Debug.LogError("Card owner could not be determined.");
-        return -1;
-    }
 
-    public void DeselectAllCards()
-    {
-        foreach (DeckManager.Card selectedCard in selectedCards)
-        {
-            // Find the corresponding CardClickable component and update its visuals
-            CardClickable[] cardClickables = FindObjectsByType<CardClickable>(FindObjectsSortMode.None);
-            foreach (CardClickable cardClickable in cardClickables)
-            {
-                if (cardClickable.card == selectedCard)
-                {
-                    cardClickable.UpdateCardVisuals(false);
-                }
-            }
-        }
-        selectedCards.Clear();
-    }
+    //public void DeselectAllCards()
+    //{
+    //    foreach (Card selectedCard in selectedCards)
+    //    {
+    //        // Find the corresponding CardClickable component and update its visuals
+    //        CardClickable[] cardClickables = FindObjectsByType<CardClickable>(FindObjectsSortMode.None);
+    //        foreach (CardClickable cardClickable in cardClickables)
+    //        {
+    //            if (cardClickable.card == selectedCard)
+    //            {
+    //                cardClickable.UpdateCardVisuals(false);
+    //            }
+    //        }
+    //    }
+    //    selectedCards.Clear();
+    //}
 
     void UpdateCardVisuals(bool isSelected)
     {
