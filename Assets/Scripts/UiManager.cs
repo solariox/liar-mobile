@@ -155,7 +155,6 @@ public class UIManager : MonoBehaviour
         //    // Validate the play
         if (selectedCards.Count == 0)
         {
-            Debug.LogWarning("No cards selected!");
             return;
         }
 

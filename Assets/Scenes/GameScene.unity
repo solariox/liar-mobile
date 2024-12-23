@@ -323,8 +323,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1016268813}
-        m_TargetAssemblyTypeName: TurnManager, Assembly-CSharp
+      - m_Target: {fileID: 1461181861}
+        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: CallLiar
         m_Mode: 1
         m_Arguments:

@@ -22,7 +22,6 @@ public class ServerGameManager : NetworkBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            Debug.LogWarning("Multiple instances of ServerGameManager detected! Destroying duplicate.");
             Destroy(gameObject);
             return;
         }
@@ -102,7 +101,6 @@ public class ServerGameManager : NetworkBehaviour
     {
         lastPlayedCards = new List<Card>();
 
-        Debug.Log(lastPlayedCards.Count);
         Player player = cards[0].Owner;
         // Move cards from player to commonBoard
         foreach (Card card in cards)
@@ -120,19 +118,16 @@ public class ServerGameManager : NetworkBehaviour
 
     public void CallLiar()
     {
-        Debug.Log(lastPlayedCards.Count);
         //Check the last played cards
-        //if (lastPlayedCards.Count == 0)
-        //{
-        //Debug.LogWarning("No cards to challenge!");
-        //return;
-        //}
+        if (lastPlayedCards.Count == 0)
+        {
+            return;
+        }
 
         Player looser = null;
         // Validate the claim
         foreach (Card card in lastPlayedCards)
         {
-            Debug.Log(card.Rank);
             if (card.Rank != currentTurnType && card.Rank != "Joker")
             {
                 looser = players[currentPlayerIndex - 1];

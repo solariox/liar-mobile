@@ -21,7 +21,6 @@ public class CardClickable : MonoBehaviour, IPointerClickHandler
         // Check if it's the correct player's turn
         if ((ServerGameManager.GetCurrentPlayer() != card.Owner))
         {
-            Debug.Log("Not your turn!");
             return;
         }
 
