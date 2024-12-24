@@ -4,142 +4,123 @@ using Unity.Services.Core;
 using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
 using UnityEngine;
+using Unity.Netcode;
 using System;
-using UnityEngine.UI;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using Unity.Netcode.Transports.UTP;
+using Unity.Networking.Transport.Relay;
 
 public class CustomRelayManager : MonoBehaviour
 {
-
-    /// <summary>
-    /// The textbox displaying the Status.
-    /// </summary>
     public TextMeshProUGUI Status;
-        /// <summary>
-    /// The Button displaying the Player Id.
-    /// </summary>
     public TMP_InputField PlayerIdInput;
-
-    /// <summary>
-    /// The Button displaying the Player Id.
-    /// </summary>
     public TMP_InputField RoomIdInput;
 
-
-
-    Guid hostAllocationId;
-    Guid playerAllocationId;
-    string allocationRegion = "";
-    string joinCode = "n/a";
-    string playerId = "Not signed in";
-    string playerName = "Not signed in";
-
+    private string joinCode = "n/a";
+    private string playerId = "Not signed in";
+    private Allocation allocation;
 
     async void Start()
     {
         await UnityServices.InitializeAsync();
-
         UpdateUI();
     }
 
     void UpdateUI()
     {
-        Status.text = joinCode;
-
+        Status.text = $"Join Code: {joinCode}";
     }
+
     public async void OnCreateRoom()
     {
         await OnSignIn();
         await OnAllocate();
         await OnCreateCode();
+
+        // Start Netcode as Host
+        NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(allocation, "dtls"));
+        NetworkManager.Singleton.StartHost();
+        Debug.Log("Host started. Waiting for players...");
         UpdateUI();
     }
 
-    /// <summary>
-    /// Event handler for when the Sign In button is clicked.
-    /// </summary>
+    public async void OnJoinRoom()
+    {
+        string JoinInputText = RoomIdInput.text;
+        await OnSignIn();
+
+        try
+        {
+            var joinAllocation = await RelayService.Instance.JoinAllocationAsync(JoinInputText);
+            Debug.Log($"Player joined room with Allocation ID: {joinAllocation.AllocationId}");
+
+            // Connect as Client
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
+
+            NetworkManager.Singleton.StartClient();
+        }
+        catch (RelayServiceException ex)
+        {
+            Debug.LogError($"Failed to join room: {ex.Message}");
+        }
+    }
+
     private async Task OnSignIn()
     {
         try
         {
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
             playerId = AuthenticationService.Instance.PlayerId;
-
-
-            Debug.Log($"Signed in. Player ID: {playerId};");
+            Debug.Log($"Signed in. Player ID: {playerId}");
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Failed to sign in: {ex.Message}");
+            Debug.LogError($"Sign-in failed: {ex.Message}");
         }
     }
 
-    public async Task OnAssignPlayerName()
-    {
-        await AuthenticationService.Instance.UpdatePlayerNameAsync(PlayerIdInput.ToString());
-        playerName = AuthenticationService.Instance.PlayerName;
-    }
-
-
-
-
-    /// <summary>
-    /// Event handler for when the Allocate button is clicked.
-    /// </summary>
     private async Task OnAllocate()
     {
-        Debug.Log("Host - Creating an allocation.");
+        try
+        {
+            allocation = await RelayService.Instance.CreateAllocationAsync(4);
 
-
-        Allocation allocation = await RelayService.Instance.CreateAllocationAsync(4);
-        // Important: Once the allocation is created, you have ten seconds to BIND
-        hostAllocationId = allocation.AllocationId;
-        allocationRegion = allocation.Region;
-      
-        Debug.Log($"Host Allocation ID: {hostAllocationId}, region: {allocationRegion}");
-
+        }
+        catch (RelayServiceException ex)
+        {
+            Debug.LogError($"Allocation failed: {ex.Message}");
+        }
     }
 
-
-    /// <summary>
-    /// Event handler for when the Get Join Code button is clicked.
-    /// </summary>
     private async Task OnCreateCode()
     {
-        Debug.Log("Host - Getting a join code for my allocation. I would share that join code with the other players so they can join my session.");
-
         try
         {
-            joinCode = await RelayService.Instance.GetJoinCodeAsync(hostAllocationId);
-            Debug.Log("Host - Got join code: " + joinCode);
+            joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+            Debug.Log($"Join Code: {joinCode}");
         }
         catch (RelayServiceException ex)
         {
-            Debug.LogError(ex.Message + "\n" + ex.StackTrace);
+            Debug.LogError($"Failed to get join code: {ex.Message}");
         }
-
     }
 
-    /// <summary>
-    /// Event handler for when the Join button is clicked.
-    /// </summary>
-    private async Task OnJoin()
+    // Triggered by the host to start the game
+    public void OnStartGame()
     {
-        Debug.Log("Player - Joining host allocation using join code.");
-
-        try
+        if (NetworkManager.Singleton.IsHost)
         {
-            var joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
-            playerAllocationId = joinAllocation.AllocationId;
-            Debug.Log("Player Allocation ID: " + playerAllocationId);
+            ChangeSceneForAll("GameScene");
         }
-        catch (RelayServiceException ex)
+        else
         {
-            Debug.LogError(ex.Message + "\n" + ex.StackTrace);
+            Debug.LogError("Only the host can start the game.");
         }
-
     }
 
+    // Change the scene for all connected players
+    private void ChangeSceneForAll(string sceneName)
+    {
+        NetworkManager.Singleton.SceneManager.LoadScene(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+    }
 }
