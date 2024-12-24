@@ -9,6 +9,7 @@ using System;
 using System.Threading.Tasks;
 using Unity.Netcode.Transports.UTP;
 using Unity.Networking.Transport.Relay;
+using System.Linq;
 
 public class CustomRelayManager : MonoBehaviour
 {
@@ -28,12 +29,15 @@ public class CustomRelayManager : MonoBehaviour
 
     void UpdateUI()
     {
-        Status.text = $"Join Code: {joinCode}";
+        Status.text = $"Join Code: {joinCode} ";
+
+        
     }
 
     public async void OnCreateRoom()
     {
         await OnSignIn();
+        await OnAssignName();
         await OnAllocate();
         await OnCreateCode();
 
@@ -56,13 +60,17 @@ public class CustomRelayManager : MonoBehaviour
 
             // Connect as Client
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
-
             NetworkManager.Singleton.StartClient();
         }
         catch (RelayServiceException ex)
         {
             Debug.LogError($"Failed to join room: {ex.Message}");
         }
+    }
+
+    public async Task OnAssignName()
+    {
+        await AuthenticationService.Instance.UpdatePlayerNameAsync(PlayerIdInput.text);
     }
 
     private async Task OnSignIn()
