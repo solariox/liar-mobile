@@ -138,6 +138,12 @@ public class CustomRelayManager : NetworkBehaviour
         }
     }
 
+    // Create a function that tell all client to change scene
+    public void OnStartGame()
+    {
+       NetworkManager.Singleton.SceneManager.LoadScene("GameScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
+    }
+
     private void AddPlayer(ulong clientId, string playerName)
     {
         if (NetworkManager.Singleton.IsServer)
