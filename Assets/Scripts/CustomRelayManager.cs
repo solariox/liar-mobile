@@ -9,9 +9,13 @@ using System;
 using System.Threading.Tasks;
 using Unity.Netcode.Transports.UTP;
 using Unity.Networking.Transport.Relay;
+using Unity.Collections;
 using System.Linq;
+using System.Collections.Generic;
+using Unity.Services.Qos.V2.Models;
 
-public class CustomRelayManager : MonoBehaviour
+
+public class CustomRelayManager : NetworkBehaviour
 {
     public TextMeshProUGUI Status;
     public TMP_InputField PlayerIdInput;
@@ -21,6 +25,19 @@ public class CustomRelayManager : MonoBehaviour
     private string playerId = "Not signed in";
     private Allocation allocation;
 
+    private NetworkList<PlayerObject> players;
+
+    void Awake()
+    {
+        players = new NetworkList<PlayerObject>();
+    }
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        players.OnListChanged += OnPlayersListChanged;
+        AddPlayer(NetworkManager.Singleton.LocalClientId, PlayerIdInput.text);
+    }
+
     async void Start()
     {
         await UnityServices.InitializeAsync();
@@ -29,21 +46,34 @@ public class CustomRelayManager : MonoBehaviour
 
     void UpdateUI()
     {
-        Status.text = $"Join Code: {joinCode} ";
+        // Replace the problematic line with the following code
+        var playerNames = new List<string>();
+        foreach (var player in players)
+        {
+            playerNames.Add(player.PlayerName.ToString());
+        }
 
-        
+        // Join player names into a single string for display
+        Status.text = $"Join Code: {joinCode}\nPlayers: {string.Join(", ", playerNames)}";
     }
+
+    private void OnPlayersListChanged(NetworkListEvent<PlayerObject> changeEvent)
+    {
+        UpdateUI();
+    }
+
+
 
     public async void OnCreateRoom()
     {
         await OnSignIn();
-        await OnAssignName();
         await OnAllocate();
         await OnCreateCode();
 
         // Start Netcode as Host
         NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(allocation, "dtls"));
         NetworkManager.Singleton.StartHost();
+
         Debug.Log("Host started. Waiting for players...");
         UpdateUI();
     }
@@ -61,16 +91,12 @@ public class CustomRelayManager : MonoBehaviour
             // Connect as Client
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
             NetworkManager.Singleton.StartClient();
+
         }
         catch (RelayServiceException ex)
         {
             Debug.LogError($"Failed to join room: {ex.Message}");
         }
-    }
-
-    public async Task OnAssignName()
-    {
-        await AuthenticationService.Instance.UpdatePlayerNameAsync(PlayerIdInput.text);
     }
 
     private async Task OnSignIn()
@@ -92,7 +118,6 @@ public class CustomRelayManager : MonoBehaviour
         try
         {
             allocation = await RelayService.Instance.CreateAllocationAsync(4);
-
         }
         catch (RelayServiceException ex)
         {
@@ -113,22 +138,21 @@ public class CustomRelayManager : MonoBehaviour
         }
     }
 
-    // Triggered by the host to start the game
-    public void OnStartGame()
+    private void AddPlayer(ulong clientId, string playerName)
     {
-        if (NetworkManager.Singleton.IsHost)
+        if (NetworkManager.Singleton.IsServer)
         {
-            ChangeSceneForAll("GameScene");
+            players.Add(new PlayerObject(clientId, playerName));
         }
         else
         {
-            Debug.LogError("Only the host can start the game.");
+            SubmitPlayerRequestServerRpc(clientId, playerName);
         }
     }
 
-    // Change the scene for all connected players
-    private void ChangeSceneForAll(string sceneName)
+    [ServerRpc(RequireOwnership = false)]
+    private void SubmitPlayerRequestServerRpc(ulong clientId, string playerName)
     {
-        NetworkManager.Singleton.SceneManager.LoadScene(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+        players.Add(new PlayerObject(clientId, playerName));
     }
 }
